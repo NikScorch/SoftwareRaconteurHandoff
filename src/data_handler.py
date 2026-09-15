@@ -1,7 +1,18 @@
 import json
 from datetime import datetime
+from pathlib import Path
 import matplotlib.pyplot as plt
 import csv
+
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+DATA_FILE = PROJECT_DIR / "data" / "eva-data.json"
+OUTPUT_DIR = PROJECT_DIR / "outputs"
+
+CUMULATIVE_CHART = OUTPUT_DIR / "cumulative_duration.png"
+COUNTRY_CHART = OUTPUT_DIR / "duration_per_country.png"
+COUNTRY_CSV = OUTPUT_DIR / "duration_per_country.csv"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 records = []
 dates = []
@@ -13,7 +24,8 @@ def load_json(path):
         eva_data = json.load(file)
     return eva_data
 
-eva_data = load_json("eva-data.json")     
+eva_data = load_json(DATA_FILE)
+
 for eva in eva_data:
     date_text = eva.get("date")
     duration_text = eva.get("duration")
@@ -35,7 +47,7 @@ plt.plot(dates, cumulative_hours)
 plt.xlabel("Year")
 plt.ylabel("Cumulative EVA duration (hours)")
 plt.tight_layout()
-plt.savefig("cumulative_duration.png")
+plt.savefig(CUMULATIVE_CHART)
 plt.show()
 
 # new code..
@@ -70,5 +82,5 @@ def save_country_totals_to_csv(country_totals, output_path):
 country_totals = get_eva_duration_per_country(eva_data)
 for country, country_hours in sorted(country_totals.items()):
     print(f"  {country}: {country_hours:.2f}")
-plot_country_totals(country_totals, "duration_per_country.png")
-save_country_totals_to_csv(country_totals, "duration_per_country.csv")
+plot_country_totals(country_totals, COUNTRY_CHART)
+save_country_totals_to_csv(country_totals, COUNTRY_CSV)
