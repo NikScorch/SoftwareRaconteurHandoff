@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 import matplotlib.pyplot as plt
+import csv
 
 with open("eva-data.json", "r", encoding="utf-8") as file:
     eva_data = json.load(file)
@@ -66,8 +67,6 @@ def plot_country_totals(country_totals, output_path):
 plot_country_totals(country_totals, "duration_per_country.png")
 
 def save_country_totals_to_csv(country_totals, output_path):
-    import csv
-
     with open(output_path, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(["country", "total_hours"])
