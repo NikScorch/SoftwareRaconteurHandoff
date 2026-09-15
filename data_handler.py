@@ -3,11 +3,17 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import csv
 
-with open("eva-data.json", "r", encoding="utf-8") as file:
-    eva_data = json.load(file)
-
 records = []
+dates = []
+cumulative_hours = []
+total_hours = 0
 
+def load_json(path):
+    with open(path, "r", encoding="utf-8") as file:
+        eva_data = json.load(file)
+    return eva_data
+
+eva_data = load_json("eva-data.json")     
 for eva in eva_data:
     date_text = eva.get("date")
     duration_text = eva.get("duration")
@@ -19,10 +25,6 @@ for eva in eva_data:
     records.append((date, duration_hours))
 
 records.sort(key=lambda record: record[0])
-
-dates = []
-cumulative_hours = []
-total_hours = 0
 
 for date, duration_hours in records:
     total_hours += duration_hours
@@ -64,7 +66,6 @@ def save_country_totals_to_csv(country_totals, output_path):
         writer.writerow(["country", "total_hours"])
         for country, country_hours in sorted(country_totals.items()):
             writer.writerow([country, f"{country_hours:.2f}"])
-
 
 country_totals = get_eva_duration_per_country(eva_data)
 for country, country_hours in sorted(country_totals.items()):
