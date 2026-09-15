@@ -35,6 +35,8 @@ plt.tight_layout()
 plt.savefig("cumulative_duration.png")
 plt.show()
 
+# new code..
+
 def get_eva_duration_per_country(eva_data):
     totals = {}
     for eva in eva_data:
