@@ -49,12 +49,6 @@ def get_eva_duration_per_country(eva_data):
         totals[country] = totals.get(country, 0) + hours + minutes / 60
     return totals
 
-country_totals = get_eva_duration_per_country(eva_data)
-
-print("Total EVA hours per country:")
-for country, country_hours in sorted(country_totals.items()):
-    print(f"  {country}: {country_hours:.2f}")
-
 def plot_country_totals(country_totals, output_path):
     plt.figure()
     plt.bar(list(country_totals.keys()), list(country_totals.values()))
@@ -64,8 +58,6 @@ def plot_country_totals(country_totals, output_path):
     plt.savefig(output_path)
     plt.show()
 
-plot_country_totals(country_totals, "duration_per_country.png")
-
 def save_country_totals_to_csv(country_totals, output_path):
     with open(output_path, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
@@ -73,5 +65,9 @@ def save_country_totals_to_csv(country_totals, output_path):
         for country, country_hours in sorted(country_totals.items()):
             writer.writerow([country, f"{country_hours:.2f}"])
 
+
+country_totals = get_eva_duration_per_country(eva_data)
+for country, country_hours in sorted(country_totals.items()):
+    print(f"  {country}: {country_hours:.2f}")
+plot_country_totals(country_totals, "duration_per_country.png")
 save_country_totals_to_csv(country_totals, "duration_per_country.csv")
-print("\nSaved country totals to duration_per_country.csv")
