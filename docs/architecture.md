@@ -102,7 +102,7 @@ flowchart TD
     main --> prep
     main --> analysis
     main --> pres
-    analysis --> prep
+    analysis -.->|"EvaRecord fields only"| prep
     pres -.->|"result types only"| analysis
 ```
 
@@ -127,3 +127,43 @@ flowchart TD
 Dependency rules: no module depends on `main`; `analysis` doesn't depend on
 `data_loader` or `presentation`; `presentation` doesn't depend on
 `data_loader` or `preparation`.
+
+## 3. Maintainability evaluation (after restructuring and FR)
+
+### Test evidence
+
+```
+$ .venv/bin/python -m pytest -q
+........................                                                 [100%]
+24 passed
+```
+
+| Requirement | Tests |
+|-------------|-------|
+| New country comparison | `tests/test_comparison.py`: counts/totals/averages, leader, inclusive start and end years, zero → unavailable, tie, case-insensitive names, CLI output on the bundled data (expected values calculated independently from the raw JSON) |
+| Existing analysis operation | `tests/test_analysis.py`: `cumulative_duration` ordering and skipping undated EVAs; `duration_per_country` including undated EVAs |
+| Invalid input / boundaries | inverted year range, unknown country (analysis and CLI exit code 1 without a traceback), malformed durations (`"abc"`, `"1:60"`, `"-1:30"`, …), bad dates, empty input |
+| AR5 existing behaviour | `test_bundled_data_matches_pre_restructuring_output` checks the original totals (Russia 626.58, USA 1360.07). During the restructuring commit, console output and the CSV were also diffed byte for byte against the inherited script, and all 330 cumulative data points were compared, with no differences. |
+| AR3 decoupling | `test_analysis_does_not_depend_on_presentation` imports `analysis` in a fresh interpreter and asserts matplotlib wasn't loaded |
+
+### Before and after
+
+| Question | Before (`data_handler.py`) | After |
+|----------|---------------------------|-------|
+| Modules | 1 file, 84 lines, everything at import time | 5 modules (311 lines including the new feature), no import-time side effects |
+| How many modules changed to add the FR? | n/a (everything would go in the one file) | 3 of 5: `analysis` (calculation), `presentation` (output), `main` (CLI). `data_loader` and `preparation` were untouched. |
+| Which modules depend on which? | n/a | `main` → all; `analysis` → `preparation` (the `EvaRecord` type, by duck typing); `presentation` → matplotlib only. No cycles, and nothing depends on `main`. |
+| Can calculations be tested without reading files or displaying results? | No. Importing the script reads the data, writes files and calls `plt.show()`. | Yes. Analysis tests build `EvaRecord`s in memory, and the analysis module doesn't load matplotlib. |
+| Are responsibilities easier to identify? | Responsibilities interleaved in top-level code | One module per AR1 responsibility, named after it |
+| Has duplication been reduced? | `"H:MM"` parsing written twice | One `parse_duration()`; the comparison reuses `duration_per_country()` instead of re-summing |
+| Unnecessary complexity? | — | Kept small: plain functions, three frozen dataclasses, one exception class, no new third-party dependencies (only `pytest` for tests). The cost is navigating five files and a CLI with a subcommand. |
+
+### Coupling example addressed (AR3)
+
+In the inherited code, `get_eva_duration_per_country()` read the raw JSON keys
+and parsed `"H:MM"` strings itself, and the cumulative calculation did the same
+in a second copy. Analysis was therefore coupled to the storage format: a
+change such as storing durations in minutes would have needed edits in every
+calculation. Now only `preparation.prepare_records()` knows the raw format.
+Analysis operates on `EvaRecord.duration_hours`, so a format change is confined
+to `preparation` (and `data_loader` if the file type changes).
