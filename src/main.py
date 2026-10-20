@@ -33,10 +33,30 @@ def run_reports(records, show):
         presentation.show_charts()
 
 
+def run_comparison(records, args):
+    """Compare two countries and print the result; return the exit status."""
+    try:
+        comparison = analysis.compare_countries(
+            records, args.country_a, args.country_b, args.start_year, args.end_year)
+    except analysis.ComparisonError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+    presentation.print_comparison(comparison)
+    return 0
+
+
 def parse_args(argv):
     parser = argparse.ArgumentParser(description="Process NASA EVA data.")
     parser.add_argument("--no-show", action="store_true",
                         help="save charts without opening a window")
+    commands = parser.add_subparsers(dest="command")
+    commands.add_parser("reports", help="generate the standard reports (default)")
+    compare = commands.add_parser(
+        "compare", help="compare EVA activity of two countries over a period of years")
+    compare.add_argument("country_a")
+    compare.add_argument("country_b")
+    compare.add_argument("start_year", type=int)
+    compare.add_argument("end_year", type=int)
     return parser.parse_args(argv)
 
 
@@ -48,6 +68,8 @@ def main(argv=None):
         print(f"Could not read EVA data from {DATA_FILE}: {error}", file=sys.stderr)
         return 1
     records = prepare_records(raw_evas)
+    if args.command == "compare":
+        return run_comparison(records, args)
     run_reports(records, show=not args.no_show)
     return 0
 

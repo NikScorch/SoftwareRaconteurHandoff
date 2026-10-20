@@ -38,6 +38,20 @@ def print_country_totals(country_totals):
         print(f"  {country}: {country_hours:.2f}")
 
 
+def print_comparison(comparison):
+    print(f"EVA activity {comparison.start_year}-{comparison.end_year}")
+    print(f"  {'Country':<10} {'EVAs':>6} {'Total (h)':>10} {'Average (h)':>12}")
+    for activity in (comparison.first, comparison.second):
+        average = ("unavailable" if activity.average_hours is None
+                   else f"{activity.average_hours:.2f}")
+        print(f"  {activity.country:<10} {activity.eva_count:>6} "
+              f"{activity.total_hours:>10.2f} {average:>12}")
+    if comparison.leader is None:
+        print("Result: tie - both countries have the same total EVA duration.")
+    else:
+        print(f"Result: {comparison.leader} has the greater total EVA duration.")
+
+
 def show_charts():
     """Display every chart created so far."""
     plt.show()
